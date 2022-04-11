@@ -36,7 +36,9 @@ public class DataAnalyzerService implements CommandLineRunner {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-
+        System.out.println();
+        System.out.println("BREWERIES ANALYZE");
+        System.out.println("----------------------------------------------");
         printBreweriesPerStateFormatted(countPlacesInStates("brew"));
         System.out.println("----------------------------------------------");
         printTopCitiesForBreweries(10, findTopCityForBrewery());
