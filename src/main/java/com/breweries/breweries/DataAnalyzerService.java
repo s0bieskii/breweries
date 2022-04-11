@@ -38,12 +38,64 @@ public class DataAnalyzerService implements CommandLineRunner {
         }
 
         printBreweriesPerStateFormatted(countPlacesInStates("brew"));
+        System.out.println("----------------------------------------------");
         printTopCitiesForBreweries(10, findTopCityForBrewery());
+        System.out.println("----------------------------------------------");
         System.out.println(countGivenPlacesWithWebsite("brew") + " breweries has website");
+        System.out.println("----------------------------------------------");
         System.out.println(countBreweriesOfferGivenFoodInGivenState(State.DE, "taco") + " breweries in " +
                 State.DE.getFullName() + " state offer taco");
-        countBreweriesOfferWine();
+        System.out.println("----------------------------------------------");
+        printBreweriesWithWinePercentage(countBreweriesOfferWine());
+    }
 
+    private HashMap<String, Integer> countPlacesInStates(String countingCategory) {
+        HashMap<String, Integer> data = new HashMap<>();
+        countingCategory = countingCategory.toUpperCase();
+        for (Sheet sheet : workbook) {
+            for (Row row : sheet) {
+                Cell categoryCell = row.getCell(Config.CATEGORY_CELL_INDEX);
+                Cell stateCell = row.getCell(Config.STATE_CELL_INDEX);
+                if (row.getRowNum() == 0 || isCellEmpty(categoryCell) || isCellEmpty(stateCell)) {
+                    continue;
+                }
+                String category = categoryCell.getStringCellValue().toUpperCase();
+                String state = stateCell.getStringCellValue().toUpperCase().trim();
+                if (category.contains(countingCategory) && allStatesShortcuts.contains(state)
+                        || allStatesName.contains(state)) {
+                    if (!allStatesShortcuts.contains(state)) {
+                        state = State.findStateEnumByName(state).name();
+                    }
+                    data.computeIfPresent(state, (key, value) -> value + 1);
+                    data.putIfAbsent(state, 1);
+                }
+            }
+        }
+        return data;
+    }
+
+    public HashMap<String, Integer> findTopCityForBrewery() {
+        HashMap<String, Integer> topCityBreweries = new HashMap<>();
+        for (Sheet sheet : workbook) {
+            for (Row row : sheet) {
+                Cell categoryCell = row.getCell(Config.CATEGORY_CELL_INDEX);
+                Cell cityCell = row.getCell(Config.CITY_CELL_INDEX);
+                if (row.getRowNum() == 0 || isCellEmpty(categoryCell) || isCellEmpty(cityCell)) {
+                    continue;
+                }
+                String category = categoryCell.getStringCellValue().toUpperCase();
+                String city = cityCell.getStringCellValue().toUpperCase().trim();
+                if (category.contains("BREW")) {
+                    if (!topCityBreweries.keySet().contains(city)) {
+                        topCityBreweries.put(city, 1);
+                        continue;
+                    }
+                    topCityBreweries.computeIfPresent(city, (key, value) -> value + 1);
+                    topCityBreweries.putIfAbsent(city, 1);
+                }
+            }
+        }
+        return topCityBreweries;
     }
 
     private HashMap<String, int[]> countBreweriesOfferWine() {
@@ -57,31 +109,21 @@ public class DataAnalyzerService implements CommandLineRunner {
                     countBreweriesOfferGivenFoodInGivenState(State.findStateEnumByShortcut(set.getKey()), "wine");
             breweriesOfferWine.putIfAbsent(set.getKey(), breweryWine);
         }
-
         return breweriesOfferWine;
-    }
-
-    private void printBreweriesWithWinePercentage(HashMap<String, int[]> toPrint) {
-        DecimalFormat df = new DecimalFormat("#.00");
-        for (Map.Entry<String, int[]> set : toPrint.entrySet()) {
-            double percentage = calculatePercentage(set.getValue()[1], set.getValue()[0]);
-            System.out.println("In " + State.findStateEnumByShortcut(set.getKey()) + " " + df.format(percentage) +
-                    "% breweries offer wine");
-        }
     }
 
     private int countBreweriesOfferGivenFoodInGivenState(State stateEnum, String foodName) {
         int numberOfBreweriesInStateOfferGivenFood = 0;
         for (Sheet sheet : workbook) {
             for (Row row : sheet) {
-                Cell categoryCell = row.getCell(2);
-                Cell stateCell = row.getCell(12);
-                Cell menuCell = row.getCell(9);
+                Cell categoryCell = row.getCell(Config.CATEGORY_CELL_INDEX);
+                Cell stateCell = row.getCell(Config.STATE_CELL_INDEX);
+                Cell menuCell = row.getCell(Config.MENU_CELL_INDEX);
                 if (row.getRowNum() == 0 || isCellEmpty(categoryCell) || isCellEmpty(stateCell)) {
                     continue;
                 }
-                String category = row.getCell(2).getStringCellValue().toUpperCase();
-                String state = row.getCell(12).getStringCellValue().toUpperCase().trim();
+                String category = categoryCell.getStringCellValue().toUpperCase();
+                String state = stateCell.getStringCellValue().toUpperCase().trim();
                 String menu;
                 if (category.contains("BREW") &&
                         (stateEnum.name().equals(state) || stateEnum.getFullName().equals(state))) {
@@ -102,38 +144,13 @@ public class DataAnalyzerService implements CommandLineRunner {
         return numberOfBreweriesInStateOfferGivenFood;
     }
 
-    private HashMap<String, Integer> countPlacesInStates(String countingCategory) {
-        HashMap<String, Integer> data = new HashMap<>();
-        countingCategory = countingCategory.toUpperCase();
-        for (Sheet sheet : workbook) {
-            for (Row row : sheet) {
-                Cell categoryCell = row.getCell(2);
-                Cell stateCell = row.getCell(12);
-                if (row.getRowNum() == 0 || isCellEmpty(categoryCell) || isCellEmpty(stateCell)) {
-                    continue;
-                }
-                String category = categoryCell.getStringCellValue().toUpperCase();
-                String state = stateCell.getStringCellValue().toUpperCase().trim();
-                if (category.contains(countingCategory) && allStatesShortcuts.contains(state)
-                        || allStatesName.contains(state)) {
-                    if (!allStatesShortcuts.contains(state)) {
-                        state = State.findStateEnumByName(state).name();
-                    }
-                    data.computeIfPresent(state, (key, value) -> value + 1);
-                    data.putIfAbsent(state, 1);
-                }
-            }
-        }
-        return data;
-    }
-
-    public int countGivenPlacesWithWebsite(String placeToCount) {
+    private int countGivenPlacesWithWebsite(String placeToCount) {
         int counter = 0;
         placeToCount = placeToCount.toUpperCase();
         for (Sheet sheet : workbook) {
             for (Row row : sheet) {
-                Cell categoryCell = row.getCell(2);
-                Cell websiteCell = row.getCell(14);
+                Cell categoryCell = row.getCell(Config.CATEGORY_CELL_INDEX);
+                Cell websiteCell = row.getCell(Config.WEBSITE_CELL_INDEX);
                 if (row.getRowNum() == 0 || isCellEmpty(categoryCell) || isCellEmpty(websiteCell)) {
                     continue;
                 }
@@ -147,28 +164,13 @@ public class DataAnalyzerService implements CommandLineRunner {
         return counter;
     }
 
-    public HashMap<String, Integer> findTopCityForBrewery() {
-        HashMap<String, Integer> topCityBreweries = new HashMap<>();
-        for (Sheet sheet : workbook) {
-            for (Row row : sheet) {
-                Cell categoryCell = row.getCell(2);
-                Cell cityCell = row.getCell(3);
-                if (row.getRowNum() == 0 || isCellEmpty(categoryCell) || isCellEmpty(cityCell)) {
-                    continue;
-                }
-                String category = categoryCell.getStringCellValue().toUpperCase();
-                String city = cityCell.getStringCellValue().toUpperCase().trim();
-                if (category.contains("BREW")) {
-                    if (!topCityBreweries.keySet().contains(city)) {
-                        topCityBreweries.put(city, 1);
-                        continue;
-                    }
-                    topCityBreweries.computeIfPresent(city, (key, value) -> value + 1);
-                    topCityBreweries.putIfAbsent(city, 1);
-                }
-            }
+    private void printBreweriesWithWinePercentage(HashMap<String, int[]> toPrint) {
+        DecimalFormat df = new DecimalFormat("#.00");
+        for (Map.Entry<String, int[]> set : toPrint.entrySet()) {
+            double percentage = calculatePercentage(set.getValue()[1], set.getValue()[0]);
+            System.out.println("In " + State.findStateEnumByShortcut(set.getKey()) + " " + df.format(percentage) +
+                    "% breweries offer wine");
         }
-        return topCityBreweries;
     }
 
     private void printBreweriesPerStateFormatted(HashMap<String, Integer> toPrint) {
@@ -178,7 +180,6 @@ public class DataAnalyzerService implements CommandLineRunner {
             String message = stateName + " state has " + toPrint.get(state) + " given places";
             System.out.println(message);
         }
-        System.out.println("----------------------------------------------");
     }
 
     private void printTopCitiesForBreweries(int howManyPositionPrint, HashMap<String, Integer> hashMap) {
@@ -189,7 +190,6 @@ public class DataAnalyzerService implements CommandLineRunner {
         System.out.println("Top " + howManyPositionPrint + " cities for breweries");
         for (Object e : a) {
             if (counter == howManyPositionPrint) {
-                System.out.println("----------------------------------------------");
                 return;
             }
             System.out.println(((Map.Entry<String, Integer>) e).getKey() + " : "
@@ -214,7 +214,7 @@ public class DataAnalyzerService implements CommandLineRunner {
 
     }
 
-    private static boolean isCellEmpty(final Cell cell) {
+    private boolean isCellEmpty(final Cell cell) {
         if (cell == null) { // use row.getCell(x, Row.CREATE_NULL_AS_BLANK) to avoid null cells
             return true;
         }
@@ -230,7 +230,7 @@ public class DataAnalyzerService implements CommandLineRunner {
         return false;
     }
 
-    public double calculatePercentage(double obtained, double total) {
+    private double calculatePercentage(double obtained, double total) {
         return obtained * 100 / total;
     }
 
