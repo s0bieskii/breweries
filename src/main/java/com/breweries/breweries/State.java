@@ -57,7 +57,7 @@ public enum State {
     WY("WYOMING");
     private final String state;
 
-    private State(String state) {
+    State(String state) {
         this.state = state;
     }
 
