@@ -47,6 +47,12 @@ public class DataAnalyzerService implements CommandLineRunner {
                 State.DE.getFullName() + " state offer taco");
         System.out.println("----------------------------------------------");
         printBreweriesWithWinePercentage(countBreweriesOfferWine());
+
+        try {
+            workbook.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private HashMap<String, Integer> countPlacesInStates(String countingCategory) {

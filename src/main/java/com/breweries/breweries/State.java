@@ -2,8 +2,7 @@ package com.breweries.breweries;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 public enum State {
     AL("ALABAMA"),
@@ -56,39 +55,40 @@ public enum State {
     WI("WISCONSIN"),
     MO("MISSOURI"),
     WY("WYOMING");
-    private String state;
+    private String fullName;
 
-    private State(String state) {
-        this.state = state;
+    State(String fullName) {
+        this.fullName = fullName;
     }
 
     public String getFullName() {
-        return this.state;
+        return this.fullName;
     }
 
-    public final static List<String> getAllStatesShortcutAsString(){
-        return Arrays.stream(State.class.getEnumConstants()).map(State::name).collect(Collectors.toList());
+    public static List<String> getAllStatesShortcutAsString() {
+        return Arrays.stream(values())
+                .map(Enum::name)
+                .toList();
     }
 
-    public final static List<String> getAllStatesNameAsString(){
-        return Arrays.stream(State.class.getEnumConstants()).map(State::getFullName).collect(Collectors.toList());
+    public static List<String> getAllStatesNameAsString() {
+        return Arrays.stream(values())
+                .map(State::getFullName)
+                .toList();
     }
 
-    public final static State findStateEnumByShortcut(String stateShortcut){
-        for(State state : State.class.getEnumConstants()){
-            if(state.name().equals(stateShortcut.toUpperCase())){
-                return state;
-            }
+    public static State findStateEnumByShortcut(String stateShortcut) {
+        try {
+            return State.valueOf(stateShortcut);
+        } catch (IllegalArgumentException illegalArgumentException) {
+            return null;
         }
-        return null;
     }
 
-    public final static State findStateEnumByName(String stateName){
-        for(State state : State.class.getEnumConstants()){
-            if(state.getFullName().equals(stateName.toUpperCase())){
-                return state;
-            }
-        }
-        return null;
+    public static State findStateEnumByName(String stateName) {
+        return Arrays.stream(values())
+                .filter(value -> Objects.equals(value.getFullName(), stateName))
+                .findFirst()
+                .orElse(null);
     }
 }
