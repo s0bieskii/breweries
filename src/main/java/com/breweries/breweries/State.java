@@ -55,7 +55,7 @@ public enum State {
     WI("WISCONSIN"),
     MO("MISSOURI"),
     WY("WYOMING");
-    private String state;
+    private final String state;
 
     private State(String state) {
         this.state = state;
@@ -65,26 +65,25 @@ public enum State {
         return this.state;
     }
 
-    public final static List<String> getAllStatesShortcutAsString() {
+    public final static List<String> getAllStatesShortcutAsString(){
         return Arrays.stream(State.class.getEnumConstants()).map(State::name).collect(Collectors.toList());
     }
 
-    public final static List<String> getAllStatesNameAsString() {
+    public final static List<String> getAllStatesNameAsString(){
         return Arrays.stream(State.class.getEnumConstants()).map(State::getFullName).collect(Collectors.toList());
     }
 
-    public final static State findStateEnumByShortcut(String stateShortcut) {
-        for (State state : State.class.getEnumConstants()) {
-            if (state.name().equals(stateShortcut.toUpperCase())) {
+    public final static State findStateEnumByShortcut(String stateShortcut){
+        for(State state : State.class.getEnumConstants()){
+            if(state.name().equals(stateShortcut.toUpperCase()))
                 return state;
             }
-        }
         return null;
     }
 
-    public final static State findStateEnumByName(String stateName) {
-        for (State state : State.class.getEnumConstants()) {
-            if (state.getFullName().equals(stateName.toUpperCase())) {
+    public final static State findStateEnumByName(String stateName){
+        for(State state : State.class.getEnumConstants()){
+            if(state.getFullName().equals(stateName.toUpperCase())){
                 return state;
             }
         }
